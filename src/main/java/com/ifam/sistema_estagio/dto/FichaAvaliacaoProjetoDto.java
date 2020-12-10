@@ -12,16 +12,14 @@ import java.io.Serializable;
 @Setter
 @Builder
 @AllArgsConstructor
-public class FichaAvaliacaoProjetoDto implements Serializable, IObjetoDto<FichaDeAvaliacaoProjeto> {
-    private Double media;
-
+public class FichaAvaliacaoProjetoDto implements IObjetoDto<FichaDeAvaliacaoProjeto> {
+    private String id;
     private Double notaSlide;
     private Double notaAssunto;
     private Double notaClareza;
     private Double notaLinguagem;
     private Double notaTempo;
     private Double notaRespostas;
-
     private Double notaApresentacao;
     private Double notaABNT;
     private Double notaMetodologia;
@@ -29,14 +27,19 @@ public class FichaAvaliacaoProjetoDto implements Serializable, IObjetoDto<FichaD
     private Double notaFund;
     private Double notaDiagramas;
     private Double notaResultados;
-
     private UsuarioDto avaliador;
     private AtaDto ata;
+
+    public FichaAvaliacaoProjetoDto(String id){
+        this.id = id;
+    }
 
     @Override
     public FichaDeAvaliacaoProjeto construirEntidade() {
         return FichaDeAvaliacaoProjeto.builder()
-                .ata(ata.construirEntidade())
+                .id(id)
+                .ata(ata == null ? null: ata.construirEntidade())
+                .professor(avaliador == null ? null: avaliador.construirProfessor())
                 .notaDefesa(NotaProjetoDefesa.builder()
                         .notaAssunto(notaAssunto)
                         .notaClareza(notaClareza)
@@ -44,7 +47,8 @@ public class FichaAvaliacaoProjetoDto implements Serializable, IObjetoDto<FichaD
                         .notaRespostas(notaRespostas)
                         .notaSlide(notaSlide)
                         .notaTempo(notaTempo)
-                        .build())
+                        .build()
+                )
                 .notaTrabalho(NotaProjetoTrabalho.builder()
                         .notaABNT(notaABNT)
                         .notaApresentacao(notaApresentacao)
@@ -53,8 +57,8 @@ public class FichaAvaliacaoProjetoDto implements Serializable, IObjetoDto<FichaD
                         .notaFund(notaFund)
                         .notaMetodologia(notaMetodologia)
                         .notaResultados(notaResultados)
-                        .build())
-                .professor(avaliador.construirProfessor())
+                        .build()
+                )
                 .build();
     }
 }

@@ -1,6 +1,5 @@
 package com.ifam.sistema_estagio.entity;
 
-import java.io.File;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -13,6 +12,7 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.ifam.sistema_estagio.util.enums.Curso;
 import com.ifam.sistema_estagio.util.enums.ModalidadeCurso;
 
@@ -24,8 +24,8 @@ import lombok.*;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "aluno")
-public class Aluno extends Usuario implements UsuarioLogavel{
+@Table(name = "alunos")
+public class Aluno extends Usuario{
 
 	@Column(nullable = false, name = "data_conclusao")
 	@Temporal(TemporalType.TIMESTAMP)
@@ -42,15 +42,8 @@ public class Aluno extends Usuario implements UsuarioLogavel{
 	@Enumerated(EnumType.STRING)
 	private ModalidadeCurso modalidadeCurso;
 
-	@Column(nullable = true, name = "anexo")
-	private File anexo;
-	
-	//Estágio ou projeto
+	@JsonManagedReference
 	@ManyToOne
 	@JoinColumn(name = "estagioPcct_id")
 	private EstagioPCCT estagioPcct;
-	
-	@ManyToOne
-	@JoinColumn(name = "papel_id")
-	private Papel papel;
 }

@@ -13,8 +13,8 @@ import java.io.Serializable;
 @Setter
 @Builder
 @AllArgsConstructor
-public class FichaAvaliacaoEstagioDto implements Serializable, IObjetoDto<FichaDeAvaliacaoEstagio> {
-    private Double media;
+public class FichaAvaliacaoEstagioDto implements IObjetoDto<FichaDeAvaliacaoEstagio> {
+    private String id;
     private Double notaConhecimento;
     private Double notaOrganizacao;
     private Double notaAtividades;
@@ -22,17 +22,23 @@ public class FichaAvaliacaoEstagioDto implements Serializable, IObjetoDto<FichaD
     private UsuarioDto avaliador;
     private AtaDto ata;
 
+    public FichaAvaliacaoEstagioDto(String id){
+        this.id = id;
+    }
+
     @Override
     public FichaDeAvaliacaoEstagio construirEntidade() {
         return FichaDeAvaliacaoEstagio.builder()
-                .ata(ata.construirEntidade())
+                .id(id)
+                .ata(ata == null ? null: ata.construirEntidade())
+                .professor(avaliador == null ? null: avaliador.construirProfessor())
                 .nota(NotaEstagio.builder()
                         .notaApresentacao(notaApresentacao)
                         .notaAtividades(notaAtividades)
                         .notaConhecimento(notaConhecimento)
                         .notaOrganizacao(notaOrganizacao)
-                        .build())
-                .professor(avaliador.construirProfessor())
+                        .build()
+                )
                 .build();
     }
 }

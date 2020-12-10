@@ -1,100 +1,78 @@
 package com.ifam.sistema_estagio.controller;
 
-import java.util.List;
-
+import com.ifam.sistema_estagio.dto.FichaAvaliacaoEstagioDto;
+import com.ifam.sistema_estagio.exceptions.ErroRequisicaoFactoryException;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
-import com.ifam.sistema_estagio.entity.Ata;
-import com.ifam.sistema_estagio.entity.FichaDeAvaliacaoEstagio;
-import com.ifam.sistema_estagio.services.AtaService;
 import com.ifam.sistema_estagio.services.FichaDeAvaliacaoEstagioService;
 
-@Controller
-@RequestMapping(value = "ata/{id}/avaliacao-estagio")
+@RestController
+@RequestMapping("/fichas-de-avaliacao-estagio")
+@SuppressWarnings("unused")
 public class FichaDeAvaliacaoEstagioController {
 	
 	@Autowired
-	private FichaDeAvaliacaoEstagioService service;
+	private FichaDeAvaliacaoEstagioService fichaDeAvaliacaoEstagioService;
 
-	@Autowired
-	private AtaService ataService;
-	
-	private Ata getAtaById(Integer id) {
-		return ataService.encontrarPorId(id).get();
-	}
-	
-	@GetMapping(value = "/", consumes = "application/json", produces = "application/json")
-	public ResponseEntity<List<FichaDeAvaliacaoEstagio>> list(@PathVariable Integer id) {
-		Ata ata = getAtaById(id);
-		List<FichaDeAvaliacaoEstagio> fichas = service.findByAta(ata);
-		
-		if(fichas.isEmpty()) {
-			return ResponseEntity.badRequest().build();
-		}
-		
-		return ResponseEntity.ok(fichas);
-	}
-	
-	@PostMapping(value = {"", "/"}, consumes = "application/json", produces = "application/json")
-	public ResponseEntity<FichaDeAvaliacaoEstagio> create(@RequestBody FichaDeAvaliacaoEstagio ficha, @PathVariable Integer id) {
+	@PostMapping
+	public ResponseEntity<Object> salvar(
+			@RequestBody FichaAvaliacaoEstagioDto fichaAvaliacaoEstagioDto
+	){
 		try{
-			Ata ata = getAtaById(id);
-		
-			ficha.setAta(ata);
-			
-			FichaDeAvaliacaoEstagio createdFicha = service.salvar(ficha);
-			
-			return ResponseEntity.ok(createdFicha);
-		}catch(Exception e) {
-			return ResponseEntity.badRequest().build();
+			val fichaCriada =  fichaDeAvaliacaoEstagioService.salvar(fichaAvaliacaoEstagioDto.construirEntidade());
+			return ResponseEntity.ok(fichaCriada);
+		}catch(Exception e){
+			return ErroRequisicaoFactoryException.construir(e);
 		}
 	}
 
-	@PutMapping(value = {"/{idFicha}"}, consumes = "application/json", produces = "application/json")
-	public ResponseEntity<FichaDeAvaliacaoEstagio> create(@RequestBody FichaDeAvaliacaoEstagio ficha, 
-			@PathVariable("id") Integer id, 
-			@PathVariable("idFicha") Integer idFicha) {
+	@GetMapping
+	public ResponseEntity<Object> listar(){
 		try{
-			Ata ata = getAtaById(id);
-		
-			if(!ficha.getAta().equals(ata)) {
-				return ResponseEntity.badRequest().build();
-			}
-		
-			FichaDeAvaliacaoEstagio updatedFicha = service.atualizar(idFicha, ficha);
-			
-			return ResponseEntity.ok(updatedFicha);
-		}catch(Exception e) {
-			return ResponseEntity.badRequest().build();
+			val fichas = fichaDeAvaliacaoEstagioService.listar();
+			return ResponseEntity.ok(fichas);
+		}catch(Exception e){
+			return ErroRequisicaoFactoryException.construir(e);
 		}
 	}
 
-	@DeleteMapping(value = {"/{idFicha}"}, consumes = "application/json", produces = "application/json")
-	public ResponseEntity<FichaDeAvaliacaoEstagio> create(@PathVariable("id") Integer id, 
-			@PathVariable("idFicha") Integer idFicha) {
+	@GetMapping("/{idFicha}")
+	public ResponseEntity<Object> encontrarPorId(@PathVariable String idFicha){
 		try{
-		
-			Ata ata = getAtaById(id);
-			FichaDeAvaliacaoEstagio ficha = service.encontrarPorId(idFicha).get();
-		
-			if(!ficha.getAta().equals(ata)) {
-				return ResponseEntity.badRequest().build();
-			}
-		
-			service.deletar(idFicha);
-			
-			return ResponseEntity.ok().build();
-		}catch(Exception e) {
-			return ResponseEntity.badRequest().build();
+			val ficha = fichaDeAvaliacaoEstagioService.encontrarPorId(idFicha);
+			val fichaNaoExiste = !ficha.isPresent();
+			if(fichaNaoExiste) throw new Exception("Ficha não encontrada");;
+			return ResponseEntity.ok(ficha.get());
+		}catch (Exception e){
+			return ErroRequisicaoFactoryException.construir(e);
+		}
+	}
+
+	@PutMapping
+	public ResponseEntity<Object> atualizar(
+			@RequestBody FichaAvaliacaoEstagioDto fichaAvaliacaoEstagioDto
+	){
+		try{
+			val fichaAtualizada =  fichaDeAvaliacaoEstagioService.atualizar(
+					fichaAvaliacaoEstagioDto.getId(),
+					fichaAvaliacaoEstagioDto.construirEntidade()
+			);
+			return ResponseEntity.ok(fichaAtualizada);
+		}catch(Exception e){
+			return ErroRequisicaoFactoryException.construir(e);
+		}
+	}
+
+	@DeleteMapping("/{idFicha}")
+	public ResponseEntity<Object> deletar(@PathVariable String idFicha){
+		try{
+			fichaDeAvaliacaoEstagioService.deletar(idFicha);
+			return ResponseEntity.ok(true);
+		}catch (Exception e){
+			return ErroRequisicaoFactoryException.construir(e);
 		}
 	}
 }

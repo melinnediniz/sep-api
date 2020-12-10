@@ -1,97 +1,138 @@
 package com.ifam.sistema_estagio.controller;
 
-import java.io.IOException;
 import java.util.List;
 
 import com.ifam.sistema_estagio.dto.BancaDto;
+import com.ifam.sistema_estagio.exceptions.ErroRequisicaoFactoryException;
 import com.ifam.sistema_estagio.reports.fields.*;
 import com.ifam.sistema_estagio.reports.messages.*;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.ifam.sistema_estagio.reports.DocumentosService;
-
-import net.sf.jasperreports.engine.JRException;
+import com.ifam.sistema_estagio.reports.DocumentosManager;
 
 @RestController
 @RequestMapping("/documentos")
+@SuppressWarnings("unused")
 public class DocumentosController {
 
 	@Autowired
-	private DocumentosService service;
+	private DocumentosManager documentosManager;
 
-	private CertificadoBuilderMessage certificadoBuilderMessage = new CertificadoBuilderMessage();
-	private FichaEstagioBuilderMessage fichaEstagioBuilderMessage = new FichaEstagioBuilderMessage();
-	private FichaProjetoCapaBuilderMessage fichaProjetoCapaBuilderMessage = new FichaProjetoCapaBuilderMessage();
-	private FichaProjetoDefesaBuilderMessage fichaProjetoDefesaBuilderMessage = new FichaProjetoDefesaBuilderMessage();
-	private FichaProjetoRelatorioBuilderMessage fichaProjetoRelatorioBuilderMessage = new FichaProjetoRelatorioBuilderMessage();
-	private CertificadoFrenteBuilderMessage certificadoFrenteBuilderMessage = new CertificadoFrenteBuilderMessage();
-	private AtaEstagioBuilderMessage ataEstagioBuilderMessage = new AtaEstagioBuilderMessage();
-	private AtaProjetoBuilderMessage ataProjetoBuilderMessage = new AtaProjetoBuilderMessage();
+	private final CertificadoBuilderMessage certificadoBuilderMessage = new CertificadoBuilderMessage();
+	private final FichaEstagioBuilderMessage fichaEstagioBuilderMessage = new FichaEstagioBuilderMessage();
+	private final FichaProjetoCapaBuilderMessage fichaProjetoCapaBuilderMessage = new FichaProjetoCapaBuilderMessage();
+	private final FichaProjetoDefesaBuilderMessage fichaProjetoDefesaBuilderMessage = new FichaProjetoDefesaBuilderMessage();
+	private final FichaProjetoRelatorioBuilderMessage fichaProjetoRelatorioBuilderMessage = new FichaProjetoRelatorioBuilderMessage();
+	private final CertificadoFrenteBuilderMessage certificadoFrenteBuilderMessage = new CertificadoFrenteBuilderMessage();
+	private final AtaEstagioBuilderMessage ataEstagioBuilderMessage = new AtaEstagioBuilderMessage();
+	private final AtaProjetoBuilderMessage ataProjetoBuilderMessage = new AtaProjetoBuilderMessage();
 
 	@PostMapping(path = "/certificado", produces = MediaType.APPLICATION_PDF_VALUE)
-	public byte[] gerarCerticados(@RequestBody BancaDto banca) {
-		byte[] pdf = {};
+	public ResponseEntity<Object> gerarCertificados(
+			@RequestBody BancaDto banca,
+			@RequestParam(required = false, defaultValue = "false") boolean emBranco
+	) {
 		try {
-			List<CertificadoFields> certificados = certificadoBuilderMessage.retornarMensagem(banca);
-			List<FrenteCertificadoFields> certificadosFrente = certificadoFrenteBuilderMessage.retornarMensagem(banca);
+			List<CertificadoFields> certificados;
+			List<FrenteCertificadoFields> certificadosFrente;
 
-			pdf = service.gerarCertificado(certificados, certificadosFrente);
-		} catch (JRException | IOException e) {
-			e.printStackTrace();
+			if (emBranco) {
+				certificados = certificadoBuilderMessage.retornarMensagemParaPreencher(banca);
+				certificadosFrente = certificadoFrenteBuilderMessage.retornarMensagemParaPreencher(banca);
+			} else {
+				certificados = certificadoBuilderMessage.retornarMensagem(banca);
+				certificadosFrente = certificadoFrenteBuilderMessage.retornarMensagem(banca);
+			}
+			val pdf = documentosManager.gerarCertificado(certificados, certificadosFrente);
+			return ResponseEntity.ok(pdf);
+		}catch(Exception e){
+			return ErroRequisicaoFactoryException.construir(e);
 		}
-		return pdf;
 	}
 
 	@PostMapping(path = "/ficha-estagio", produces = MediaType.APPLICATION_PDF_VALUE)
-	public byte[] gerarFichaDeAvaliacaoEstagio(@RequestBody BancaDto banca) {
-		byte pdf[] = null;
+	public ResponseEntity<Object> gerarFichaDeAvaliacaoEstagio(
+			@RequestBody BancaDto banca,
+			@RequestParam(required = false, defaultValue = "false") boolean emBranco
+	) {
 		try {
-			List<FichaDeAvaliacaoEstagioFields> fichas = fichaEstagioBuilderMessage.retornarMensagem(banca);
-			pdf = service.gerarFichaDeAvaliacaoEstagio(fichas);
-		} catch (JRException | IOException e) {
-			e.printStackTrace();
+			List<FichaDeAvaliacaoEstagioFields> fichas;
+			if (emBranco) {
+				fichas = fichaEstagioBuilderMessage.retornarMensagemParaPreencher(banca);
+			} else {
+				fichas = fichaEstagioBuilderMessage.retornarMensagem(banca);
+			}
+			byte[] pdf = documentosManager.gerarFichaDeAvaliacaoEstagio(fichas);
+			return ResponseEntity.ok(pdf);
+		}catch(Exception e){
+			return ErroRequisicaoFactoryException.construir(e);
 		}
-		return pdf;
 	}
 
 	@PostMapping(path = "/ficha-projeto", produces = MediaType.APPLICATION_PDF_VALUE)
-	public byte[] gerarFichaDeAvaliacaoProjeto(@RequestBody BancaDto banca) {
-		byte pdf[] = null;
+	public ResponseEntity<Object> gerarFichaDeAvaliacaoProjeto(
+			@RequestBody BancaDto banca,
+			@RequestParam(required = false, defaultValue = "false") boolean emBranco
+	) {
 		try {
-			List<FichaDeAvaliacaoProjetoCapaFields> capas = fichaProjetoCapaBuilderMessage.retornarMensagem(banca);
-			List<FichaDeAvaliacaoProjetoDefesaFields> defesas = fichaProjetoDefesaBuilderMessage.retornarMensagem(banca);
-			List<FichaDeAvaliacaoProjetoRelatorioFields> relatorios = fichaProjetoRelatorioBuilderMessage.retornarMensagem(banca);
-
-			pdf = service.gerarFichaDeAvaliacaoProjeto(relatorios, defesas, capas);
-		} catch (JRException | IOException e) {
-			e.printStackTrace();
+			List<FichaDeAvaliacaoProjetoCapaFields> capas;
+			List<FichaDeAvaliacaoProjetoDefesaFields> defesas;
+			List<FichaDeAvaliacaoProjetoRelatorioFields> relatorios;
+			if (emBranco) {
+				capas = fichaProjetoCapaBuilderMessage.retornarMensagemParaPreencher(banca);
+				defesas = fichaProjetoDefesaBuilderMessage.retornarMensagemParaPreencher(banca);
+				relatorios = fichaProjetoRelatorioBuilderMessage.retornarMensagemParaPreencher(banca);
+			} else {
+				capas = fichaProjetoCapaBuilderMessage.retornarMensagem(banca);
+				defesas = fichaProjetoDefesaBuilderMessage.retornarMensagem(banca);
+				relatorios = fichaProjetoRelatorioBuilderMessage.retornarMensagem(banca);
+			}
+			byte[] pdf = documentosManager.gerarFichaDeAvaliacaoProjeto(relatorios, defesas, capas);
+			return ResponseEntity.ok(pdf);
+		}catch(Exception e){
+			return ErroRequisicaoFactoryException.construir(e);
 		}
-		return pdf;
 	}
 
 	@PostMapping(path = "/ata-estagio", produces = MediaType.APPLICATION_PDF_VALUE)
-	public byte[] geraAtaEstagio(@RequestBody BancaDto banca) {
-		byte pdf[] = null;
+	public ResponseEntity<Object> geraAtaEstagio(
+			@RequestBody BancaDto banca,
+			@RequestParam(required = false, defaultValue = "false") boolean emBranco
+	) {
 		try {
-			List<AtaEstagioFields> atas = ataEstagioBuilderMessage.retornarMensagem(banca);
-			pdf = service.gerarAtaEstagio(atas);
-		} catch (JRException | IOException e) {
-			e.printStackTrace();
+			List<AtaEstagioFields> atas;
+			if (emBranco) {
+				atas = ataEstagioBuilderMessage.retornarMensagemParaPreencher(banca);
+			} else {
+				atas = ataEstagioBuilderMessage.retornarMensagem(banca);
+			}
+			byte[] pdf = documentosManager.gerarAtaEstagio(atas);
+			return ResponseEntity.ok(pdf);
+		}catch(Exception e){
+			return ErroRequisicaoFactoryException.construir(e);
 		}
-		return pdf;
 	}
 
 	@PostMapping(path = "/ata-projeto", produces = MediaType.APPLICATION_PDF_VALUE)
-	public byte[] geraAtaProjeto(@RequestBody BancaDto banca) {
-		byte pdf[] = null;
+	public ResponseEntity<Object> geraAtaProjeto(
+			@RequestBody BancaDto banca,
+			@RequestParam(required = false, defaultValue = "false") boolean emBranco
+	) {
 		try {
-			List<AtaProjetoFields> atas = ataProjetoBuilderMessage.retornarMensagem(banca);
-			pdf = service.gerarAtaProjeto(atas);
-		} catch (JRException | IOException e) {
-			e.printStackTrace();
+			List<AtaProjetoFields> atas;
+			if (emBranco) {
+				atas = ataProjetoBuilderMessage.retornarMensagemParaPreencher(banca);
+			} else {
+				atas = ataProjetoBuilderMessage.retornarMensagem(banca);
+			}
+			val pdf = documentosManager.gerarAtaProjeto(atas);
+			return ResponseEntity.ok(pdf);
+		}catch(Exception e){
+			return ErroRequisicaoFactoryException.construir(e);
 		}
-		return pdf;
 	}
 }

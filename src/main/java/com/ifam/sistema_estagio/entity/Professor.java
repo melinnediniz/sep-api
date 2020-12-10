@@ -3,11 +3,11 @@ package com.ifam.sistema_estagio.entity;
 import java.util.List;
 
 import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.*;
 
 @Entity
@@ -16,26 +16,22 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "professor")
-public class Professor extends Usuario implements UsuarioLogavel {
+@Table(name = "professores")
+public class Professor extends Usuario{
 
-	// Avaliadores da banca
-	@OneToMany(mappedBy = "professor")
-	private List<Avaliadores> avaliadores;
+	@JsonBackReference
+	@ManyToMany
+	private List<Banca> bancas;
 
-	// Fichas de avaliação de estágios
+	@JsonBackReference
 	@OneToMany(mappedBy = "professor")
 	private List<FichaDeAvaliacaoEstagio> fichaEstagios;
 
-	// Fichas de avaliação de projetos
+	@JsonBackReference
 	@OneToMany(mappedBy = "professor")
 	private List<FichaDeAvaliacaoProjeto> fichaProjeto;
 
-	// Projetos ou estágios
+	@JsonBackReference
 	@OneToMany(mappedBy = "responsavel")
 	private List<EstagioPCCT> estagiosPcct;
-
-	@ManyToOne
-	@JoinColumn(name = "papel_id")
-	private Papel papel;
 }

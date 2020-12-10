@@ -5,50 +5,43 @@ import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.ifam.sistema_estagio.config.IdentificadorHexadecimalGenerator;
+import com.ifam.sistema_estagio.util.ManipularNumerosHexadecimais;
+import lombok.*;
+import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Getter
 @Setter
-@NoArgsConstructor
-@Table(name = "papel")
+@Builder
+@AllArgsConstructor
+@Table(name = "papeis")
 public class Papel {
-	
+
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@GeneratedValue(generator = IdentificadorHexadecimalGenerator.nome)
+	@GenericGenerator(
+			name = IdentificadorHexadecimalGenerator.nome,
+			strategy = "com.ifam.sistema_estagio.config.IdentificadorHexadecimalGenerator"
+	)
+	@Column(length = ManipularNumerosHexadecimais.TAMANHO_NUMERO_ALEATORIO)
 	private Integer id;
 	
 	@Column(name = "nome")
 	private String nome;
 
-	@OneToMany(mappedBy = "papel")
-	private List<Aluno> alunos;
-	
-	@OneToMany(mappedBy = "papel")
-	private List<Professor> professores;
-	
-	@OneToMany(mappedBy = "papel")
-	private List<Coordenadora> coodernadoras;
-	
+	@JsonBackReference
 	@ManyToMany
 	@JoinTable(
 			  name = "papel_funcao", 
 			  joinColumns = @JoinColumn(name = "papel_id"), 
 			  inverseJoinColumns = @JoinColumn(name = "funcao_id"))
 	private List<Funcao> funcoes;
-
-	public Papel(String nome, List<Funcao> funcoes) {
-		this.nome = nome;
-		this.funcoes = funcoes;
-	}
 }

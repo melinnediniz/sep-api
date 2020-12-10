@@ -1,26 +1,32 @@
 package com.ifam.sistema_estagio.services;
 
-
-import java.util.List;
-import java.util.stream.Collectors;
-
+import com.ifam.sistema_estagio.util.enums.TipoServico;
+import lombok.val;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ifam.sistema_estagio.entity.EstagioPCCT;
 import com.ifam.sistema_estagio.repository.EstagioPcctRepository;
-import com.ifam.sistema_estagio.util.enums.TipoServico;
+
+import java.util.List;
 
 @Service
 public class EstagioPcctService extends GenericService<EstagioPCCT, EstagioPcctRepository>{
 	
-	public List<EstagioPCCT> getEstagiosOrProjeto(TipoServico tipo){
-		List<EstagioPCCT> estagiosPcct = this.listar();
-		
-		List<EstagioPCCT> result = estagiosPcct
-				.stream()
-				.filter(estagioPcct -> estagioPcct.getTipo() == tipo)
-				.collect(Collectors.toList());
-		
-		return result;
+	@Autowired
+	private EstagioPcctRepository estagioPcctRepository;
+
+	public List<EstagioPCCT> listar(TipoServico tipo) {
+		if(tipo == null) return listar();
+		return estagioPcctRepository.findByTipo(tipo);
+	}
+
+	public EstagioPCCT finalizarEstagioPcct(String idEstagio) throws Exception {
+		val estagioPcct = encontrarPorId(idEstagio);
+		val estagioPcctNaoExiste = !estagioPcct.isPresent();
+		if(estagioPcctNaoExiste) throw new Exception("Estágio não existe");
+		if(estagioPcct.get().getConcluido()) return estagioPcct.get();
+		estagioPcct.get().setConcluido(true);
+		return atualizar(idEstagio, estagioPcct.get());
 	}
 }

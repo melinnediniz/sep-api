@@ -1,34 +1,38 @@
 package com.ifam.sistema_estagio.services;
 
-import java.util.Optional;
-
-import org.hibernate.HibernateException;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.ifam.sistema_estagio.entity.Professor;
-import com.ifam.sistema_estagio.repository.PapelRepository;
 import com.ifam.sistema_estagio.repository.ProfessorRepository;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ProfessorService extends GenericService<Professor, ProfessorRepository> {
 
-	@Autowired
-	private ProfessorRepository repository;
+    @Autowired
+    private ProfessorRepository professorRepository;
 
-	@Autowired
-	private PapelRepository papelRepository;
+    public List<Professor> encontrarPorNome(String nome){
+        return professorRepository.findByNomeContainingIgnoreCase(nome);
+    }
+    public List<Professor> encontrarPorMatricula(String matricula){
+        return professorRepository.findByMatriculaContainingIgnoreCase(matricula);
+    }
 
-	@Autowired
-	private BCryptPasswordEncoder bCryptPassowrdEncoder;
+    @Override
+    public Professor salvar(Professor professor) throws Exception {
+        val professorOptional = encontrarPorCpf(professor.getCpf());
+        if(professorOptional.isPresent()){
+            return professorOptional.get();
+        }
+        return super.salvar(professor);
+    }
 
-	public Professor create(Professor e, String papel) throws HibernateException {
-		e.setPassword(bCryptPassowrdEncoder.encode(e.getPassword()));
-		return repository.save(e);
-	}
-
-	public Optional<Professor> findByUsername(String username) {
-		return repository.findByUsername(username);
-	}
+    public Optional<Professor> encontrarPorCpf(String cpf){
+        return professorRepository.findByCpf(cpf);
+    }
 }

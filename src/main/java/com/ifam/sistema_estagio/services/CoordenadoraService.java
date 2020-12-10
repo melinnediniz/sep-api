@@ -1,38 +1,40 @@
 package com.ifam.sistema_estagio.services;
 
+import java.util.List;
 import java.util.Optional;
 
-import org.hibernate.HibernateException;
+import com.ifam.sistema_estagio.entity.Professor;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.ifam.sistema_estagio.entity.Coordenadora;
 import com.ifam.sistema_estagio.repository.CoordenadoraRepository;
-import com.ifam.sistema_estagio.repository.PapelRepository;
 
 @Service
 public class CoordenadoraService extends GenericService<Coordenadora, CoordenadoraRepository> {
 
 	@Autowired
-	private CoordenadoraRepository repository;
+	private CoordenadoraRepository coordenadoraRepository;
 
-	@Autowired
-	private PapelRepository papelRepository;
-
-	@Autowired
-	private BCryptPasswordEncoder bCryptPassowrdEncoder;
-
-	public Coordenadora create(Coordenadora e, String papel) throws HibernateException {
-		e.setPassword(bCryptPassowrdEncoder.encode(e.getPassword()));
-		return repository.save(e);
+	public List<Coordenadora> encontrarPorNome(String nome){
+		return coordenadoraRepository.findByNomeContainingIgnoreCase(nome);
 	}
 
-	public Optional<Coordenadora> findByUsername(String username) {
-		return repository.findByUsername(username);
+	public List<Coordenadora> encontrarPorMatricula(String matricula){
+		return coordenadoraRepository.findByMatriculaContainingIgnoreCase(matricula);
 	}
 
-	public Optional<Coordenadora> findByNomeCompleto(String nomeCompleto) {
-		return repository.findByNomeCompleto(nomeCompleto);
+	@Override
+	public Coordenadora salvar(Coordenadora coordenadora) throws Exception {
+		val coordenadoraOptional = encontrarPorCpf(coordenadora.getCpf());
+		if(coordenadoraOptional.isPresent()){
+			return coordenadoraOptional.get();
+		}
+		return super.salvar(coordenadora);
+	}
+
+	public Optional<Coordenadora> encontrarPorCpf(String cpf){
+		return coordenadoraRepository.findByCpf(cpf);
 	}
 }

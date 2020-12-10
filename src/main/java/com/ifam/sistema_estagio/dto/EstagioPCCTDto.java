@@ -1,52 +1,49 @@
 package com.ifam.sistema_estagio.dto;
 
-import com.ifam.sistema_estagio.entity.Aluno;
-import com.ifam.sistema_estagio.entity.Coordenadora;
 import com.ifam.sistema_estagio.entity.EstagioPCCT;
-import com.ifam.sistema_estagio.entity.Professor;
-import com.ifam.sistema_estagio.util.enums.FuncaoEstagio;
 import com.ifam.sistema_estagio.util.enums.ModalidadeCurso;
 import com.ifam.sistema_estagio.util.enums.TipoServico;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-import java.io.Serializable;
-import java.util.Collections;
+import java.io.File;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
-public class EstagioPCCTDto implements Serializable, IObjetoDto<EstagioPCCT>{
+@NoArgsConstructor
+public class EstagioPCCTDto implements IObjetoDto<EstagioPCCT>{
+    private String id;
     private String titulo;
     private Integer cargaHoraria;
     private Boolean concluido;
     private String local;
     private String descricao;
     private TipoServico tipo;
+    private File anexo;
     private ModalidadeCurso modalidadeCurso;
-    private List<UsuarioDto> usuarios;
+    private UsuarioDto responsavel;
+    private List<UsuarioDto> alunos;
+    private List<BancaDto> bancas;
+
+    public EstagioPCCTDto(String id){
+        this.id = id;
+    }
 
     @Override
     public EstagioPCCT construirEntidade() {
-        Professor orientador = usuarios.stream()
-                .filter(participante -> participante.getFuncao() == FuncaoEstagio.ORIENTADOR)
-                .findFirst()
-                .get()
-                .construirProfessor();
-
         return EstagioPCCT.builder()
+                .id(id)
                 .cargaHoraria(cargaHoraria)
                 .concluido(concluido)
                 .local(local)
                 .descricao(descricao)
                 .tipo(tipo)
                 .titulo(titulo)
-                .responsavel(orientador)
+                .responsavel(responsavel == null ? null : responsavel.construirProfessor())
+                .modalidadeCurso(modalidadeCurso)
+                .anexo(anexo)
                 .build();
     }
 }

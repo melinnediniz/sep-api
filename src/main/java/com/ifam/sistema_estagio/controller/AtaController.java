@@ -1,129 +1,64 @@
 package com.ifam.sistema_estagio.controller;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
+import com.ifam.sistema_estagio.exceptions.ErroRequisicaoFactoryException;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.ifam.sistema_estagio.entity.Ata;
-import com.ifam.sistema_estagio.entity.Banca;
 import com.ifam.sistema_estagio.services.AtaService;
-import com.ifam.sistema_estagio.services.BancaService;
+
+import java.util.HashMap;
 
 @RestController
-@RequestMapping("/bancas/{id}/atas")
+@RequestMapping("/atas")
+@SuppressWarnings("unused")
 public class AtaController {
 
 	@Autowired
-	private AtaService service;
+	private AtaService ataService;
 
-	@Autowired
-	private BancaService bancaService;
-
-	private Optional<Banca> getBancaById(Integer id) {
-		return bancaService.encontrarPorId(id);
-	}
-
-	// List all
-	@GetMapping(path = { "/", "" })
-	public List<Ata> list(@PathVariable Integer id) {
-		Optional<Banca> banca = getBancaById(id);
-
-		if (!banca.isPresent()) {
-			return new ArrayList<>();
-		}
-
-		List<Ata> atas = service.findByBanca(banca.get());
-
-		return atas;
-	}
-
-	// Create
-	@PostMapping(path = { "/", "" })
-	public ResponseEntity<Ata> create(@PathVariable Integer id, @RequestBody Ata ata) {
-		try {
-			Optional<Banca> banca = getBancaById(id);
-
-			if (!banca.isPresent()) {
-				return ResponseEntity.badRequest().build();
-			}
-
-			Ata createdAta = service.create(ata, banca.get());
-
-			return ResponseEntity.ok(createdAta);
-		} catch (Exception e) {
-			return ResponseEntity.badRequest().build();
-		}
-
-	}
-
-	// Update
-	@PutMapping(path = "/{idAta}")
-	public ResponseEntity<Ata> update(@RequestBody Ata ata,
-			@PathVariable("id") Integer id, @PathVariable("idAta") Integer idAta) {
-		try {
-
-			if (ata == null) {
-				return ResponseEntity.badRequest().build();
-			}
-
-			Ata updatedAta = service.atualizar(idAta, ata);
-
-			return ResponseEntity.ok(updatedAta);
-		} catch (Exception e) {
-			e.printStackTrace();
-
-			return ResponseEntity.badRequest().build();
+	@GetMapping
+	public ResponseEntity<Object> listar(){
+		try{
+			val atas = ataService.listar();
+			return ResponseEntity.ok(atas);
+		}catch (Exception e){
+			return ErroRequisicaoFactoryException.construir(e);
 		}
 	}
 
-	// Delete
-	@DeleteMapping(path = "/{idAta}")
-	public ResponseEntity<Ata> delete(@PathVariable("id") Integer id,
-			@PathVariable("idAta") Integer idAta) {
-
-		try {
-			service.deletar(idAta);
-
-			return ResponseEntity.ok().build();
-		} catch (Exception e) {
-			e.printStackTrace();
-
-			return ResponseEntity.badRequest().build();
+	@GetMapping("/banca/{idAta}")
+	public ResponseEntity<Object> encontrarPorBanca(@PathVariable String idAta){
+		try{
+			val ata = ataService.encontrarPorBanca(idAta);
+			val ataNaoExiste = !ata.isPresent();
+			if(ataNaoExiste) throw new Exception("Ata não encontrada");
+			return ResponseEntity.ok(ata.get());
+		}catch (Exception e){
+			return ErroRequisicaoFactoryException.construir(e);
 		}
 	}
 
-	// Find by Banca
-	@GetMapping(path = "/{idAta}")
-	public Ata findById(@PathVariable("id") Integer id,
-			@PathVariable("idAta") Integer idAta) {
-		try {
-			Optional<Banca> banca = getBancaById(id);
-
-			if (!banca.isPresent()) {
-				return new Ata();
-			}
-
-			Ata ata = service.encontrarPorId(idAta).get();
-
-			if (id == ata.getBanca().getId()) {
-				return new Ata();
-			}
-
-			return ata;
-		} catch (Exception e) {
-			return new Ata();
+	@GetMapping("/{idAta}")
+	public ResponseEntity<Object> encontrarPorId(@PathVariable String idAta){
+		try{
+			val ata = ataService.encontrarPorId(idAta);
+			val ataNaoExiste = !ata.isPresent();
+			if(ataNaoExiste) throw new Exception("Ata não encontrada");
+			return ResponseEntity.ok(ata.get());
+		}catch (Exception e){
+			return ErroRequisicaoFactoryException.construir(e);
 		}
 	}
 
+	@DeleteMapping("/{idAta}")
+	public ResponseEntity<Object> deletar(@PathVariable String idAta){
+		try{
+			ataService.deletar(idAta);
+			return ResponseEntity.ok(true);
+		}catch (Exception e){
+			return ErroRequisicaoFactoryException.construir(e);
+		}
+	}
 }
